@@ -1,0 +1,3 @@
+[submodule "gradle-next"]
+	path = gradle-next
+	url = git@github.com:gradle/gradle.git
