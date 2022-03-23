@@ -20,7 +20,6 @@ abstract class ExplodeZipAndFindJars : TransformAction<TransformParameters.None>
     override
     fun transform(outputs: TransformOutputs) {
         val gradleJars = outputs.dir("gradle-jars")
-        val dependencies = outputs.dir("gradle-dependencies")
         ZipInputStream(Files.newInputStream(artifact.get().asFile.toPath())).use { zin ->
             generateSequence { zin.nextEntry }.forEach { zipEntry ->
                 var shortName: String = zipEntry.name
@@ -28,8 +27,7 @@ abstract class ExplodeZipAndFindJars : TransformAction<TransformParameters.None>
                     shortName = shortName.substring(shortName.lastIndexOf('/') + 1)
                 }
                 if (shortName.endsWith(".jar")) {
-                    val outputDir = if (shortName.startsWith("gradle-")) gradleJars else dependencies
-                    val out = File(outputDir, shortName)
+                    val out = File(gradleJars, shortName)
                     Files.copy(zin, out.toPath())
                     zin.closeEntry()
                 }
