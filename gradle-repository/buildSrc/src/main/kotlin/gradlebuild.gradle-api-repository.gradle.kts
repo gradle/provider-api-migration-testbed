@@ -34,11 +34,12 @@ repositories {
 
 val artifactType = Attribute.of("artifactType", String::class.java)
 val runtimeAttribute = objects.named<Usage>(Usage.JAVA_RUNTIME)
+val gradleLibsDirArtifactType = "gradle-libs-dir"
 
 val gradleDistribution by configurations.creating
 val gradleJarsConfiguration by configurations.creating {
     extendsFrom(gradleDistribution)
-    attributes.attribute(artifactType, "gradle-libs-dir")
+    attributes.attribute(artifactType, gradleLibsDirArtifactType)
 }
 
 dependencies {
@@ -46,7 +47,7 @@ dependencies {
 
     registerTransform(ExplodeZipAndFindJars::class) {
         from.attribute(artifactType, "zip")
-        to.attribute(artifactType, "gradle-libs-dir")
+        to.attribute(artifactType, gradleLibsDirArtifactType)
     }
 }
 
