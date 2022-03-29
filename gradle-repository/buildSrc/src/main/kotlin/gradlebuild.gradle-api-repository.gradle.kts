@@ -66,7 +66,7 @@ val createShadedGradleApiJar by tasks.registering(Jar::class) {
 afterEvaluate {
 
     // We need to configure publishing in afterEvaluate,
-    // since the repository URL and the MavenPublication.version aren't providers.
+    // since the repository URL and the MavenPublication.version aren't providers yet.
 
     publishing {
         repositories {
