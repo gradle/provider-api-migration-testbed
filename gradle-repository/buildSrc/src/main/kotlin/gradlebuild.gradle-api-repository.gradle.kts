@@ -45,7 +45,7 @@ val gradleJarsConfiguration by configurations.creating {
 dependencies {
     gradleDistribution(gradleApiRepository.gradleVersion.map { "gradle-dist:gradle:${it}@zip" })
 
-    registerTransform(ExplodeZipAndFindJars::class) {
+    registerTransform(ExtractJarsFromZip::class) {
         from.attribute(artifactType, "zip")
         to.attribute(artifactType, gradleLibsDirArtifactType)
     }

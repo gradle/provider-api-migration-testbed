@@ -12,7 +12,7 @@ import java.nio.file.Files
 import java.util.zip.ZipInputStream
 
 @DisableCachingByDefault(because = "Not worth caching")
-abstract class ExplodeZipAndFindJars : TransformAction<TransformParameters.None> {
+abstract class ExtractJarsFromZip : TransformAction<TransformParameters.None> {
 
     @get:PathSensitive(PathSensitivity.NAME_ONLY)
     @get:InputArtifact
