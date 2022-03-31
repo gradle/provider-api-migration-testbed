@@ -7,7 +7,7 @@ val gradleApiRepository = extensions.create<GradleRepositoryExtension>("gradleAp
 
 gradleApiRepository.apply {
     gradleVersion.convention(
-        providers.gradleProperty("gradleApiVersion").orElse("7.4.1")
+        providers.gradleProperty("gradleApiVersion")
     )
     repoLocation.convention(
         layout.buildDirectory.dir("repo")
