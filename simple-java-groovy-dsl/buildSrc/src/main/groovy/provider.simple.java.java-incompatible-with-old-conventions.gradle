@@ -1,0 +1,5 @@
+
+@groovy.transform.CompileStatic
+def enabledIncompatibleMethod(Task task) {
+    task.doNotTrackState("Introduced in Gradle 7.3")
+}
