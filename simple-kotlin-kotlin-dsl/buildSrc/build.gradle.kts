@@ -17,3 +17,7 @@ repositories {
 dependencies {
     implementation("org.jetbrains.kotlin:kotlin-gradle-plugin")
 }
+
+fun Task.doSomeStuff() {
+    doNotTrackState("Introduced in Gradle 7.3")
+}
