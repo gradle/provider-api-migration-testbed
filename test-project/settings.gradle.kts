@@ -10,9 +10,7 @@
 
 rootProject.name = "test-project"
 include("app", "list", "utilities")
-includeBuild("groovy-build-logic")
-includeBuild("java-build-logic")
-includeBuild("kotlin-build-logic")
+includeBuild("build-logic")
 
 dependencyResolutionManagement {
     repositories {
