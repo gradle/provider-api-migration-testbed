@@ -5,7 +5,7 @@
  */
 
 plugins {
-    id("test.project.kotlin-library-conventions")
+    id("test.project.build.java-library-conventions")
 }
 
 dependencies {

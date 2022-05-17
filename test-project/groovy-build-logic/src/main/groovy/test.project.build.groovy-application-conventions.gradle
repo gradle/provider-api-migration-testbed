@@ -1,0 +1,18 @@
+plugins {
+    id 'groovy'
+    id 'application'
+}
+
+testing {
+    suites {
+        test {
+            useJUnitJupiter("5.8.1")
+        }
+    }
+}
+
+dependencies {
+    constraints {
+        implementation("org.apache.commons:commons-text:1.9")
+    }
+}

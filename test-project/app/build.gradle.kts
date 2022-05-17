@@ -5,7 +5,7 @@
  */
 
 plugins {
-    id("test.project.kotlin-application-conventions")
+    id("test.project.build.groovy-application-conventions")
 }
 
 dependencies {
