@@ -3,6 +3,16 @@ plugins {
     id 'application'
 }
 
+pluginManager.apply(test.project.build.TestGroovyPlugin)
+
+tasks.withType(AbstractCompile).configureEach {
+    targetCompatibility = "11"
+    sourceCompatibility = "11"
+    doLast {
+        println("Hello from Groovy plugin, classpath length: ${classpath.files.size()}")
+    }
+}
+
 testing {
     suites {
         test {
@@ -15,4 +25,5 @@ dependencies {
     constraints {
         implementation("org.apache.commons:commons-text:1.9")
     }
+    implementation "org.codehaus.groovy:groovy:3.0.10"
 }

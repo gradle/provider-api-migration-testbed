@@ -1,3 +1,4 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import test.project.build.TestKotlinPlugin
 
 plugins {
@@ -11,7 +12,13 @@ tasks.withType<AbstractCompile>().configureEach {
     targetCompatibility = "11"
     sourceCompatibility = "11"
     doLast {
-        println("Hello from Kotlin plugin ${classpath.files.size}")
+        println("Hello from Kotlin plugin, classpath length: ${classpath.files.size}")
+    }
+}
+
+tasks.withType<KotlinCompile>().configureEach {
+    kotlinOptions {
+        jvmTarget = "11"
     }
 }
 
@@ -36,8 +43,7 @@ dependencies {
 testing {
     suites {
         // Configure the built-in test suite
-        val test by getting(JvmTestSuite::class) {
-            // Use JUnit Jupiter test framework
+        getByName<JvmTestSuite>("test") {
             useJUnitJupiter("5.8.1")
         }
     }
