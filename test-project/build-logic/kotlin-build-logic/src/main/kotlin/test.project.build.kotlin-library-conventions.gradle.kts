@@ -11,6 +11,7 @@ pluginManager.apply(TestKotlinPlugin::class)
 tasks.withType<AbstractCompile>().configureEach {
     targetCompatibility = "11"
     sourceCompatibility = "11"
+    classpath += files()
     doLast {
         println("Hello from Kotlin plugin, classpath length: ${classpath.files.size}")
     }

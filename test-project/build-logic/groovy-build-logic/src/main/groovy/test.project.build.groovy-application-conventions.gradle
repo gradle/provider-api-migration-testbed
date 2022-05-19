@@ -8,6 +8,7 @@ pluginManager.apply(test.project.build.TestGroovyPlugin)
 tasks.withType(AbstractCompile).configureEach {
     targetCompatibility = "11"
     sourceCompatibility = "11"
+    classpath += files()
     doLast {
         println("Hello from Groovy plugin, classpath length: ${classpath.files.size()}")
     }
