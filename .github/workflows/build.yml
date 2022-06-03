@@ -21,45 +21,43 @@ jobs:
         uses: actions/checkout@v2
         with:
           submodules: true
-      - name: setup java
+      - name: Setup Java
         uses: actions/setup-java@v2
         with:
           distribution: temurin
           java-version: 11
-      - name: build with original Gradle version
+      - name: Build test-project with original Gradle version
         uses: gradle/gradle-build-action@v2
         with:
           cache-read-only: ${{ github.ref != 'refs/heads/master' }}
           build-root-directory: test-project
           arguments: assemble
-      - name: publish Gradle API
+      - name: Publish Gradle API
         uses: gradle/gradle-build-action@v2
         with:
-          cache-read-only: ${{ github.ref != 'refs/heads/master' }}
           build-root-directory: gradle-repository
           arguments: |
             publishAllPublicationsToLocalMavenRepository
             -PgradleApiVersion=7.4.1
-      - name: install Gradle Next
+      - name: Install Gradle Next
         uses: gradle/gradle-build-action@v2
         with:
-          cache-read-only: ${{ github.ref != 'refs/heads/master' }}
           build-root-directory: gradle-next
           arguments: |
             install
-            -Pgradle_installPath=gradle-next-install
+            -Pgradle_installPath=../gradle-next-install
             :distributions-full:binDistributionZip
             --no-configuration-cache
             -DdisableLocalCache=true
             -DagreePublicBuildScanTermOfService=yes
             -DcacheNode=us
-      - name: build with Gradle Next using source pinning
+      - name: Build test-project with Gradle Next using source pinning
         run: gradle-next-install/bin/gradle -p test-project assemble -Dorg.gradle.api.source-version=7.4.1 -Dgradle.api.repository.url=$(pwd)/gradle-repository/build/repo
-      - name: upgrade build logic
+      - name: Upgrade build logic in test-project
         run: git -C test-project apply ../test-project.patch
-      - name: build with Gradle Next using upgraded build logic
+      - name: Build test-project with Gradle Next using upgraded build logic
         run: gradle-next-install/bin/gradle -p test-project assemble
-      - name: upload Gradle Next
+      - name: Upload Gradle Next
         uses: actions/upload-artifact@v3
         with:
           name: gradle-next.zip
