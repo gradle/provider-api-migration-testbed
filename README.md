@@ -1,11 +1,19 @@
-# provider-api-migration-testbed
-A testbed to try out mitigation strategies for the provider API migration.
+# Provider API migration testbed
 
-## Components
+Gradle is planning to migrate all existing public API to use the [https://docs.gradle.org/current/userguide/lazy_configuration.html](lazy configuration) patters, aka the "Provider API".
+In a large part this means changing JavaBean properties on tasks and extensions to their `Property<T>` counterparts.
+Since these are all breaking changes, we need to also include mitigation strategies to prevent breaking user builds.
 
-In `test-project` you can find a simple Gradle project that builds fine with an older Gradle version. It uses JavaBean APIs.
+This repository contains a testbed to try out how this migration will work from a user's point of view.
+This is a proof-of-concept demonstration to help discussion around the planned migration, not a fully fledged implementation.
 
-In `gradle-next` there is a patched version of Gradle that has some changes to its public APIs:
+In `test-project` you can find a simple Gradle project that works with an older Gradle version.
+The build logic accesses some to-be-migrated JavaBean properties on the old Gradle API.
+During the demonstration we will upgrade this project to use a new Gradle version that has these properties upgraded.
+The project also uses the Kotlin plugin, which itself also references some of the to-be-migrated properties.
+
+In `gradle-next` there is the patched version of Gradle created for this demonstration.
+It includes examples of the kinds of changes we are planning to make across Gradle's public APIs as part of the provider API migration:
 
 * In `AbstractCompile`
   * `sourceCompatibility` & `targetCompatibility` was converted from `String` to `Property<String>`,
@@ -15,13 +23,17 @@ In `gradle-next` there is a patched version of Gradle that has some changes to i
 * In `Copy`
   * `destinationDir` was converted from `File` to `DirectoryProperty`.
 
-The "Gradle Next" distribution also includes several features to ease the way in migrating `test-project` to the new APIs. These will be demonstrated below.
+The "Gradle Next" distribution also includes features to mitigate the pain of migrating to the new APIs:
+
+1) **bytecode upgrades** – Gradle Next can take already compiled bytecode, and replace references to old APIs with calls to new APIs transparently. 
+2) **source pinning** – This feature allows a build engineer to upgrade the Gradle distribution used to build a project without having to immediately fix all the breaking changes in the build logic sources of the project.
+3) **assignment source compatibility** – In Gradle Next the assignment (`=`) operator works for `Property` objects as well in both Groovy and Kotlin DSL, so the majority of existing build logic will stay source-compatible.
 
 ## Running the demo
 
 Let's first build `test-project` with its original Gradle distribution:
 
-```
+```shell
 $ cd test-project
 $ ./gradlew assemble
 >>>>>>>>>
@@ -38,12 +50,14 @@ Hello from Java plugin, classpath length: 2
 Hello from Groovy plugin, classpath length: 6
 
 BUILD SUCCESSFUL in 667ms
-32 actionable tasks: 32 up-to-date
+32 actionable tasks: 32 executed
 ```
 
-Now let's install "Gradle Next" to `gradle-next-install` using:
+As expected, it works.
 
-```
+Now let's install "Gradle Next" using:
+
+```shell
 $ ./install-gradle-next.sh
 ```
 
@@ -51,18 +65,20 @@ This installs the patched distribution in the `gradle-next` directory into the `
 
 If we try to build `test-project` with Gradle Next, it will fail:
 
-```
+```shell
 $ cd test-project
 $ ../gradle-next-install/bin/gradle assemble
+>>>>>>>>>
+Running with Gradle version 7.6-20220603153347+0000
+>>>>>>>>>
 
 ...
 
 BUILD FAILED in 3s
 4 actionable tasks: 1 executed, 3 up-to-date
-
 ```
 
-The failures are caused by the changed APIs:
+As expected, the failures are caused by the changed APIs:
 
 ```text
 > Task :build-logic:groovy-build-logic:compileGroovy FAILED
@@ -81,7 +97,7 @@ startup failed:
 ### Bytecode upgrades
 
 But not every API change has caused a failure.
-You can also see on the console a list of bytecode upgrades that happened to the Kotlin plugin:
+You can see on the console a list of bytecode upgrades that happened to the Kotlin plugin:
 
 ```text
 Matched call to org.gradle.api.tasks.compile.AbstractCompile.getSourceCompatibility() in org.jetbrains.kotlin.gradle.internal.Kapt3GradleSubplugin$createKaptKotlinTask$2$1, replacing...
@@ -106,8 +122,13 @@ If you want to see them again, the easiest way is to remove `~/.gradle/caches/ja
 
 ### Source pinning
 
+We could now fix the problems immediately, but Gradle Next offers a way to keep the existing build logic source code working even after the upgrade. 
+
 To make the build work with Gradle Next without changing the source code, we can pin it to the original Gradle API version.
-For this we need the old Gradle API to be published:
+
+**Note:** This requires Gradle APIs to be published to a Maven repository first.
+We are planning to publish them later to Maven Central as part of the migration project.
+For this demonstration we need to publish them locally:
 
 ```shell
 $ cd ../gradle-repository
@@ -128,7 +149,7 @@ drwxr-xr-x  12 lptr  staff  384 Jun  3 18:04 7.4.1
 -rw-r--r--   1 lptr  staff  128 Jun  3 18:04 maven-metadata.xml.sha512
 ```
 
-Now we can invoke Gradle Next and tell it to use the old API to compile the build logic in `test-project`, and then upgrade the resulting bytecode to work with Gradle Next's API:
+Now we can invoke Gradle Next and tell it to use the old API to compile the build logic in `test-project`:
 
 ```shell
 $ cd ../test-project
@@ -155,7 +176,8 @@ BUILD SUCCESSFUL in 24s
 32 actionable tasks: 30 executed, 2 up-to-date
 ```
 
-You can see that 
+**Note:** in this demo our goal is to demonstrate how the feature would work.
+How it is going to be triggered (system property, command-line argument etc.) is not decided yet.
 
 You can see more bytecode upgrades happening now:
 
@@ -164,9 +186,12 @@ Matched call to org.gradle.language.jvm.tasks.ProcessResources.setDestinationDir
 Matched call to org.gradle.api.tasks.compile.CompileOptions.getCompilerArgs() in test.project.build.TestGroovyPlugin$_apply_closure2, replacing...
 ```
 
+These are running against the bytcode of the build logic that wes compiled against Gradle 7.4.1, making the resulting bytecode comaptible with Gradle Next.
+
 ### Manual upgrade of sources
 
-Let's upgrade the build logic. You can follow the errors reported when trying to build without source pinning, or you can apply the patch:
+Let's upgrade the build logic for good.
+You can follow the errors reported when trying to build without source pinning, or you can apply [this patch](https://gist.github.com/wolfs/fe4d777efda81768d98277f3472f762d/):
 
 ```shell
 $ curl -s https://gist.githubusercontent.com/wolfs/fe4d777efda81768d98277f3472f762d/raw | git apply -
@@ -195,4 +220,18 @@ BUILD SUCCESSFUL in 7s
 
 Everything works, we're done with the migration!
 
-Notice that we did not need to upgrade any of the assignments in Groovy or Kotlin scripts because Gradle Next adds all the syntactic sugar to make `=` work for `Property` objects.
+### Assignment source compatibility
+
+Notice that we did not need to upgrade any of the assignments in Groovy or Kotlin scripts.
+This is because Gradle Next adds all the syntactic sugar to make `=` work for `Property` objects.
+
+For example, this code keeps working even when the type of `destinationDir` changes from `File` to `DirectoryProperty`:
+
+```kotlin
+project.tasks.withType<ProcessResources>().configureEach {
+    destinationDir = project.layout.buildDirectory.dir("new-resources").get().asFile
+}
+```
+
+Making `=` work for Kotlin DSL for `Property` types will be implemented via a new Kotlin language feature that allows the assignment operator to be overloaded.
+To keep more of the existing build logic source-compatible we are planning to make `<<` and `[]` etc. work in the DSLs for multi-valued properties like `ListProperty` where they already work for their JavaBean counterparts.
