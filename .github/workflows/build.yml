@@ -26,8 +26,13 @@ jobs:
         with:
           distribution: temurin
           java-version: 11
-      - name: install
-        id: gradle
+      - name: build with original Gradle version
+        uses: gradle/gradle-build-action@v2
+        with:
+          cache-read-only: ${{ github.ref != 'refs/heads/master' }}
+          build-root-directory: test-project
+          arguments: assemble
+      - name: install Gradle Next
         uses: gradle/gradle-build-action@v2
         with:
           cache-read-only: ${{ github.ref != 'refs/heads/master' }}
