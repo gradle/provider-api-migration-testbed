@@ -1,6 +1,6 @@
 # Provider API migration testbed
 
-Gradle is planning to migrate all existing public API to use the [https://docs.gradle.org/current/userguide/lazy_configuration.html](lazy configuration) patters, aka the "Provider API".
+Gradle is planning to migrate all existing public API to use the [lazy configuration](https://docs.gradle.org/current/userguide/lazy_configuration.html) patters, aka the "Provider API."
 In a large part this means changing JavaBean properties on tasks and extensions to their `Property<T>` counterparts.
 Since these are all breaking changes, we need to also include mitigation strategies to prevent breaking user builds.
 
