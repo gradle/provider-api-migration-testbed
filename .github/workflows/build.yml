@@ -1,4 +1,4 @@
-name: Install Gradle Next
+name: CI Build
 
 on:
   push:
