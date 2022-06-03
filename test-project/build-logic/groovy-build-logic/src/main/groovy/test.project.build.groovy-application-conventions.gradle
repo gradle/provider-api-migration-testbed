@@ -1,0 +1,30 @@
+plugins {
+    id 'groovy'
+    id 'application'
+}
+
+pluginManager.apply(test.project.build.TestGroovyPlugin)
+
+tasks.withType(AbstractCompile).configureEach {
+    targetCompatibility = "11"
+    sourceCompatibility = "11"
+    classpath += files()
+    doLast {
+        println("Hello from Groovy plugin, classpath length: ${classpath.files.size()}")
+    }
+}
+
+testing {
+    suites {
+        test {
+            useJUnitJupiter("5.8.1")
+        }
+    }
+}
+
+dependencies {
+    constraints {
+        implementation("org.apache.commons:commons-text:1.9")
+    }
+    implementation "org.codehaus.groovy:groovy:3.0.10"
+}
