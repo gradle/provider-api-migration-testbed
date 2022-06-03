@@ -17,3 +17,7 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
+
+println(">>>>>>>>>")
+println("Running with Gradle version ${GradleVersion.current().version}")
+println(">>>>>>>>>")
