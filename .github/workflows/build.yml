@@ -14,7 +14,7 @@ env:
 
 jobs:
   build:
-    name: "Install"
+    name: "Build"
     runs-on: ubuntu-20.04
     steps:
       - name: git clone
@@ -32,6 +32,14 @@ jobs:
           cache-read-only: ${{ github.ref != 'refs/heads/master' }}
           build-root-directory: test-project
           arguments: assemble
+      - name: publish Gradle API
+        uses: gradle/gradle-build-action@v2
+        with:
+          cache-read-only: ${{ github.ref != 'refs/heads/master' }}
+          build-root-directory: gradle-repository
+          arguments: |
+            publishAllPublicationsToLocalMavenRepository
+            -PgradleApiVersion=7.4.1
       - name: install Gradle Next
         uses: gradle/gradle-build-action@v2
         with:
@@ -45,8 +53,14 @@ jobs:
             -DdisableLocalCache=true
             -DagreePublicBuildScanTermOfService=yes
             -DcacheNode=us
-      - uses: actions/upload-artifact@v3
+      - name: build with Gradle Next using source pinning
+        run: gradle-next-install/bin/gradle -p test-project assemble -Dorg.gradle.api.source-version=7.4.1 -Dgradle.api.repository.url=$(pwd)/gradle-repository/build/repo
+      - name: upgrade build logic
+        run: git -C test-project apply ../test-project.patch
+      - name: build with Gradle Next using upgraded build logic
+        run: gradle-next-install/bin/gradle -p test-project assemble
+      - name: upload Gradle Next
+        uses: actions/upload-artifact@v3
         with:
           name: gradle-next.zip
           path: gradle-next/subprojects/distributions-full/build/distributions/gradle-*-bin.zip
-
