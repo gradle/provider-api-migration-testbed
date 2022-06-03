@@ -191,10 +191,10 @@ These are running against the bytcode of the build logic that wes compiled again
 ### Manual upgrade of sources
 
 Let's upgrade the build logic for good.
-You can follow the errors reported when trying to build without source pinning, or you can apply [this patch](https://gist.github.com/wolfs/fe4d777efda81768d98277f3472f762d/):
+You can follow the errors reported when trying to build without source pinning, or you can apply [this patch](test-project.patch):
 
 ```shell
-$ curl -s https://gist.githubusercontent.com/wolfs/fe4d777efda81768d98277f3472f762d/raw | git apply -
+$ git apply ../test-project.patch
 $ git status -s
  M build-logic/groovy-build-logic/src/main/groovy/test.project.build.groovy-application-conventions.gradle
  M build-logic/groovy-build-logic/src/main/groovy/test/project/build/TestGroovyPlugin.groovy
