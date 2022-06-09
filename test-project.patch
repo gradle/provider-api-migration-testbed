@@ -9,7 +9,7 @@ index cac3a21..52e7fea 100644
 +    // Keeps working because dynamic Groovy handles `Property` assignment
      targetCompatibility = "11"
      sourceCompatibility = "11"
-+    // Keeps workign via `FileCollection.plus()`
++    // Keeps working via `FileCollection.plus()`
      classpath += files()
      doLast {
          println("Hello from Groovy plugin, classpath length: ${classpath.files.size()}")
