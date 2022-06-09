@@ -189,7 +189,7 @@ Matched call to org.gradle.language.jvm.tasks.ProcessResources.setDestinationDir
 Matched call to org.gradle.api.tasks.compile.CompileOptions.getCompilerArgs() in test.project.build.TestGroovyPlugin$_apply_closure2, replacing...
 ```
 
-These are running against the bytcode of the build logic that wes compiled against Gradle 7.4.1, making the resulting bytecode comaptible with Gradle Next.
+These are running against the bytecode of the build logic that wes compiled against Gradle 7.4.1, making the resulting bytecode compatible with Gradle Next.
 
 ### Manual upgrade of sources
 
