@@ -53,23 +53,6 @@ IDEA additional info:
 Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 <+>UTF-8
 ===================================================================
-diff --git a/test-project/build-logic/groovy-build-logic/src/main/groovy/test.project.build.groovy-application-conventions.gradle b/test-project/build-logic/groovy-build-logic/src/main/groovy/test.project.build.groovy-application-conventions.gradle
---- a/test-project/build-logic/groovy-build-logic/src/main/groovy/test.project.build.groovy-application-conventions.gradle	(revision c88205e9ca573c625403202c42a9e8f64656e431)
-+++ b/test-project/build-logic/groovy-build-logic/src/main/groovy/test.project.build.groovy-application-conventions.gradle	(date 1652965995179)
-@@ -8,7 +8,7 @@
- tasks.withType(AbstractCompile).configureEach {
-     targetCompatibility = "11"
-     sourceCompatibility = "11"
--    classpath += files()
-+    classpath.from(files())
-     doLast {
-         println("Hello from Groovy plugin, classpath length: ${classpath.files.size()}")
-     }
-Index: test-project/build-logic/kotlin-build-logic/src/main/kotlin/test/project/build/TestKotlinPlugin.kt
-IDEA additional info:
-Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
-<+>UTF-8
-===================================================================
 diff --git a/test-project/build-logic/kotlin-build-logic/src/main/kotlin/test/project/build/TestKotlinPlugin.kt b/test-project/build-logic/kotlin-build-logic/src/main/kotlin/test/project/build/TestKotlinPlugin.kt
 --- a/test-project/build-logic/kotlin-build-logic/src/main/kotlin/test/project/build/TestKotlinPlugin.kt	(revision c88205e9ca573c625403202c42a9e8f64656e431)
 +++ b/test-project/build-logic/kotlin-build-logic/src/main/kotlin/test/project/build/TestKotlinPlugin.kt	(date 1652965995189)
