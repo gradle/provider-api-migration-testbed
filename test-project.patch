@@ -1,0 +1,98 @@
+diff --git a/test-project/build-logic/groovy-build-logic/src/main/groovy/test.project.build.groovy-application-conventions.gradle b/test-project/build-logic/groovy-build-logic/src/main/groovy/test.project.build.groovy-application-conventions.gradle
+index cac3a21..52e7fea 100644
+--- a/test-project/build-logic/groovy-build-logic/src/main/groovy/test.project.build.groovy-application-conventions.gradle
++++ b/test-project/build-logic/groovy-build-logic/src/main/groovy/test.project.build.groovy-application-conventions.gradle
+@@ -6,8 +6,10 @@ plugins {
+ pluginManager.apply(test.project.build.TestGroovyPlugin)
+ 
+ tasks.withType(AbstractCompile).configureEach {
++    // Keeps working because dynamic Groovy handles `Property` assignment
+     targetCompatibility = "11"
+     sourceCompatibility = "11"
++    // Keeps working via `FileCollection.plus()`
+     classpath += files()
+     doLast {
+         println("Hello from Groovy plugin, classpath length: ${classpath.files.size()}")
+diff --git a/test-project/build-logic/groovy-build-logic/src/main/groovy/test/project/build/TestGroovyPlugin.groovy b/test-project/build-logic/groovy-build-logic/src/main/groovy/test/project/build/TestGroovyPlugin.groovy
+index c35f76a..ae5e0d2 100644
+--- a/test-project/build-logic/groovy-build-logic/src/main/groovy/test/project/build/TestGroovyPlugin.groovy
++++ b/test-project/build-logic/groovy-build-logic/src/main/groovy/test/project/build/TestGroovyPlugin.groovy
+@@ -12,11 +12,15 @@ class TestGroovyPlugin implements Plugin<Project> {
+     @Override
+     void apply(Project project) {
+         project.tasks.withType(ProcessResources).configureEach { ProcessResources it ->
+-            it.destinationDir = project.layout.buildDirectory.dir("new-resources").get().asFile
++            // We now need to call `set()` on the `Property` instances in statically compiled Groovy code,
++            // and we can also take full advantage of lazy assignemnt
++            it.destinationDir.set(project.layout.buildDirectory.dir("new-resources"))
+         }
+ 
+         project.tasks.withType(GroovyCompile).configureEach { GroovyCompile it ->
+-            it.options.compilerArgs << "-proc:none"
++            // The demo does not support `<<` for `ListProperty` yet, but we are planning to add support for Groovy,
++            // so this change won't be necessary in the production version
++            it.options.compilerArgs.add("-proc:none")
+         }
+     }
+ }
+diff --git a/test-project/build-logic/java-build-logic/src/main/java/test/project/build/TestJavaPlugin.java b/test-project/build-logic/java-build-logic/src/main/java/test/project/build/TestJavaPlugin.java
+index 8d0a6d0..7fd34cd 100644
+--- a/test-project/build-logic/java-build-logic/src/main/java/test/project/build/TestJavaPlugin.java
++++ b/test-project/build-logic/java-build-logic/src/main/java/test/project/build/TestJavaPlugin.java
+@@ -16,8 +16,9 @@ public class TestJavaPlugin implements Plugin<Project> {
+         project.getPluginManager().apply("java-library");
+ 
+         project.getTasks().withType(JavaCompile.class).configureEach(compile -> {
+-            compile.setSourceCompatibility("11");
+-            compile.setTargetCompatibility("11");
++            // We now need call `set()` on the `Property` instances in Java code
++            compile.getSourceCompatibility().set("11");
++            compile.getTargetCompatibility().set("11");
+             compile.getOptions().getCompilerArgs().add("-proc:none");
+             compile.doLast(new Action<Task>() {
+                 @Override
+@@ -27,7 +28,9 @@ public class TestJavaPlugin implements Plugin<Project> {
+             });
+         });
+         project.getTasks().withType(ProcessResources.class).configureEach(processResources -> {
+-            processResources.setDestinationDir(project.getLayout().getBuildDirectory().dir("new-resources").get().getAsFile());
++            // We now need to call `set()` on the `Property` instances in Java code,
++            // and can also take full advantage of lazy assignemnt
++            processResources.getDestinationDir().set(project.getLayout().getBuildDirectory().dir("new-resources"));
+         });
+ 
+         project.getDependencies().constraints(constraints -> {
+diff --git a/test-project/build-logic/kotlin-build-logic/src/main/kotlin/test.project.build.kotlin-library-conventions.gradle.kts b/test-project/build-logic/kotlin-build-logic/src/main/kotlin/test.project.build.kotlin-library-conventions.gradle.kts
+index 9d7ef03..93ba423 100644
+--- a/test-project/build-logic/kotlin-build-logic/src/main/kotlin/test.project.build.kotlin-library-conventions.gradle.kts
++++ b/test-project/build-logic/kotlin-build-logic/src/main/kotlin/test.project.build.kotlin-library-conventions.gradle.kts
+@@ -9,8 +9,10 @@ plugins {
+ pluginManager.apply(TestKotlinPlugin::class)
+ 
+ tasks.withType<AbstractCompile>().configureEach {
++    // Keeps working using assignment overloading, a future feature in the Kotlin language
+     targetCompatibility = "11"
+     sourceCompatibility = "11"
++    // Keeps working because `ConfigurableFileCollection.plusAssign()` is now implemented
+     classpath += files()
+     doLast {
+         println("Hello from Kotlin plugin, classpath length: ${classpath.files.size}")
+diff --git a/test-project/build-logic/kotlin-build-logic/src/main/kotlin/test/project/build/TestKotlinPlugin.kt b/test-project/build-logic/kotlin-build-logic/src/main/kotlin/test/project/build/TestKotlinPlugin.kt
+index 9c072d5..1f1ca8a 100644
+--- a/test-project/build-logic/kotlin-build-logic/src/main/kotlin/test/project/build/TestKotlinPlugin.kt
++++ b/test-project/build-logic/kotlin-build-logic/src/main/kotlin/test/project/build/TestKotlinPlugin.kt
+@@ -9,10 +9,13 @@ import org.gradle.language.jvm.tasks.ProcessResources
+ class TestKotlinPlugin : Plugin<Project> {
+     override fun apply(project: Project) {
+         project.tasks.withType<ProcessResources>().configureEach {
+-            destinationDir = project.layout.buildDirectory.dir("new-resources").get().asFile
++            // This change is not strictly necessary to make the build work with Gradle Next,
++            // but now we can take full advantage of lazy assignemnt
++            destinationDir = project.layout.buildDirectory.dir("new-resources")
+         }
+ 
+         project.tasks.withType<JavaCompile>().configureEach {
++            // Keeps working since `add()` is supported by `ListProperty` as well
+             options.compilerArgs.add("-Xmx512M")
+         }
+     }

@@ -1,0 +1,64 @@
+name: CI Build
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+env:
+  # Enable debug for the `gradle-build-action` cache operations
+  GRADLE_BUILD_ACTION_CACHE_DEBUG_ENABLED: true
+
+jobs:
+  build:
+    name: "Build"
+    runs-on: ubuntu-20.04
+    steps:
+      - name: git clone
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Setup Java
+        uses: actions/setup-java@v2
+        with:
+          distribution: temurin
+          java-version: 11
+      - name: Build test-project with original Gradle version
+        uses: gradle/gradle-build-action@v2
+        with:
+          cache-read-only: ${{ github.ref != 'refs/heads/master' }}
+          build-root-directory: test-project
+          arguments: assemble
+      - name: Publish Gradle API
+        uses: gradle/gradle-build-action@v2
+        with:
+          build-root-directory: gradle-repository
+          arguments: |
+            publishAllPublicationsToLocalMavenRepository
+            -PgradleApiVersion=7.4.1
+      - name: Install Gradle Next
+        uses: gradle/gradle-build-action@v2
+        with:
+          build-root-directory: gradle-next
+          arguments: |
+            install
+            -Pgradle_installPath=../gradle-next-install
+            :distributions-full:binDistributionZip
+            --no-configuration-cache
+            -DdisableLocalCache=true
+            -DagreePublicBuildScanTermOfService=yes
+            -DcacheNode=us
+      - name: Build test-project with Gradle Next using source pinning
+        run: gradle-next-install/bin/gradle -p test-project assemble -Dorg.gradle.api.source-version=7.4.1 -Dgradle.api.repository.url=$(pwd)/gradle-repository/build/repo
+      - name: Upgrade build logic in test-project
+        run: git -C test-project apply ../test-project.patch
+      - name: Build test-project with Gradle Next using upgraded build logic
+        run: gradle-next-install/bin/gradle -p test-project assemble
+      - name: Upload Gradle Next
+        uses: actions/upload-artifact@v3
+        with:
+          name: gradle-next.zip
+          path: gradle-next/subprojects/distributions-full/build/distributions/gradle-*-bin.zip
