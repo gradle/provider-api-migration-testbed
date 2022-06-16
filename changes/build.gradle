@@ -1,0 +1,60 @@
+plugins {
+    id("base")
+}
+
+import groovy.json.JsonOutput
+import org.gradle.internal.reflect.PropertyAccessorType
+import java.lang.reflect.Method
+
+abstract class GenerateMethods extends DefaultTask {
+    @InputFile
+    abstract RegularFileProperty getInputFile()
+
+    @OutputFile
+    abstract RegularFileProperty getOutputFile()
+
+    @TaskAction
+    void execute() {
+        def methods = new LinkedHashSet<Method>()
+        inputFile.get().asFile.withReader { reader ->
+            reader.eachLine { line ->
+                def (packageName, className, methodName) = line.split(/\t/)
+                methodName = methodName.substring(0, methodName.length() - 2)
+
+                def clazz = Class.forName("${packageName}.${className}")
+                def type = PropertyAccessorType.fromName(methodName)
+                if (type == null) {
+                    println "Not a property: ${packageName}.${className}.${methodName}()"
+                    return
+                }
+                def propertyName = type.propertyNameFor(methodName)
+                clazz.methods.each { method ->
+                    def methodType = PropertyAccessorType.of(method)
+                    if (methodType != null) {
+                        if (methodType.propertyNameFor(method) == propertyName) {
+                            methods.add(method)
+                        }
+                    }
+                }
+            }
+        }
+        outputFile.get().asFile.withPrintWriter { writer ->
+            def acceptedApiChanges = methods.collect { method ->
+                [
+                        type       : method.declaringClass.typeName,
+                        member     : "Method ${method.getReturnType().typeName} ${method.declaringClass.typeName}.${method.name}(${method.parameterTypes.collect { it.typeName }.join(", ")})",
+                        acceptation: "Property upgraded",
+                        changes    : ["Method has been upgraded"]
+                ]
+            }
+            writer.println(JsonOutput.prettyPrint(JsonOutput.toJson([acceptedApiChanges: acceptedApiChanges])))
+        }
+    }
+}
+
+def generate = tasks.register("generate", GenerateMethods) {
+    inputFile = layout.projectDirectory.file("src/properties.csv")
+    outputFile = layout.buildDirectory.file("methods.txt")
+}
+
+assemble.dependsOn generate
